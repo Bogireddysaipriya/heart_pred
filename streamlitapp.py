@@ -127,4 +127,78 @@ if choice == 'Login':
             st_lottie(lottie_hello, key="hello")
 
         if selected2 == 'DIAGNOSE CAD':
-            model = load_model("C:/Users
+            model = load_model("C:/Users/Kotha/Downloads/AKGKMODEL.h5")
+            new_title = '<p style="font-family:Georgia; color:##00FFFF; font-size: 29px;">DETECT CORONARY ARTERY BLOCKAGE BY CT SCAN</p>'
+            st.markdown(new_title, unsafe_allow_html=True)
+            uploaded_file = st.file_uploader("Import your CT scan image here", type=["jpg", "jpeg"])
+
+            class_type = {0: 'NO', 1: 'YES'}
+            if uploaded_file is not None:
+                file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
+                opencv_image = cv2.imdecode(file_bytes, 1)
+                opencv_image = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2RGB)
+                resized = cv2.resize(opencv_image, (512, 512))
+                img = np.reshape(resized, [1, 512, 512, 3])
+
+                st.image(opencv_image, channels="RGB")
+
+                resized = preprocess_input(resized)
+                img_reshape = resized[np.newaxis]
+
+                Genrate_pred = st.button("DIAGNOSE")
+                if Genrate_pred:
+                    prediction = model.predict(img_reshape).argmax()
+                    res = class_type[np.argmax(model.predict(img))]
+
+                    if res == 'YES':
+                        st.error(f"Sorry, Our app confirms that you are having the chances of blockage is  : {model.predict(img)[0][1]*100} percent")
+                        st.warning('Please consult the doctor immediately !!!')
+                    else:
+                        st.success(f"our app confirms that the chances of being Normal is : {model.predict(img)[0][0]*100} percent")
+                        st.info('If needed consult the doctor')
+
+        if selected2 == 'DOCTOR DETAILS':
+            new_title = '<p style="font-family:Georgia; color:##00FFFF; font-size: 29px;">CONSULT THE DOCTOR AND BOOK AN APPOINTMENT</p>'
+            st.markdown(new_title, unsafe_allow_html=True)
+            path = r"C:/Users/Kotha/Documents/project.csv"
+            df = pd.read_csv(path)
+            st.dataframe(df)
+
+        if selected2 == 'PREDICT HEART DISEASE':
+            loaded_model = pickle.load(open('C:/Users/Kotha/Downloads/trainedrfmodelofheart.sav', 'rb'))
+
+            def heart(input_data):
+                input_data_as_numpy_array = np.asarray(input_data)
+                input_reshape = input_data_as_numpy_array.reshape(1, -1)
+                prediction = loaded_model.predict(input_reshape)
+
+                if prediction[0] == 0:
+                    return st.success('This person has less chance of heart attack')
+                else:
+                    return st.error('This person has more chance of heart attack')
+
+            def main():
+                new_title = '<p style="font-family:Georgia; color:##00FFFF; font-size: 34px;">HEART DISEASE PREDICTION</p>'
+                st.markdown(new_title, unsafe_allow_html=True)
+                age = st.text_input('AGE')
+                sex = st.radio("Select Gender: ", ('1', '0'))
+                if sex == '1':
+                    st.info("Male")
+                else:
+                    st.info("Female")
+                st.write('<style>div.row-widget.stRadio>div{flex-direction:row;}</style>', unsafe_allow_html=True)
+                chestpaintype = st.radio("CHEST PAIN TYPE (0 = typical angina,1 = atypical angina,2 = non — anginal pain,3= asymptotic)", ('0', '1', '2', '3'))
+                restingbps = st.text_input('RESTING BLOOD PRESSURE')
+                cholestrol = st.text_input('CHOLESTROL')
+                fastingbloodsugar = st.radio("FASTING BLOOD SUGAR( > 120mg/dl : 1, else : 0)", ('1', '0'))
+                restingecg = st.radio("RESTING ECG(0-normal, 1-abnormal)", ('0', '1'))
+                maxheartrate = st.text_input('MAXIMUM HEART RATE ACHIEVED')
+                exerciseangina = st.radio("EXERCISE INDUCED ANGINA(1-yes, 0-no)", ('1', '0'))
+                oldpeak = st.text_input('ST DEPRESSION INDUCED BY EXERCISE REALTIVE TO REST')
+                STslope = st.radio("PEAK EXERCISE ST SEGMENT(0 = upsloping,1 = flat,2= downsloping)", ('0', '1', '2'))
+
+                if st.button('PREDICT'):
+                    heart([age, sex, chestpaintype, restingbps, cholestrol, fastingbloodsugar, restingecg, maxheartrate, exerciseangina, oldpeak, STslope])
+
+            if __name__ == '__main__':
+                main()
